@@ -7,10 +7,17 @@ from .taxonomy import LearnedTaxonomy
 from .controller import TaxonomyGuidedController
 from .llm import Usage
 
-BASE_PROMPT = """You solve undirected graph connectivity.
+CONNECTIVITY_PROMPT = """You solve undirected graph connectivity.
 Return ONLY JSON:
 {\"answer\":\"yes\"|\"no\",\"path\":[integer node ids]}
 For yes, provide a valid source-to-target path. For no, use [].
+"""
+
+SHORTEST_PATH_PROMPT = """You solve weighted undirected shortest-path problems.
+Return ONLY JSON:
+{\"path\":[integer node ids],\"total_weight\":number}
+The path must start at the requested source and end at the requested target.
+Minimize TOTAL EDGE WEIGHT, not hop count. Validate every consecutive edge and sum weights exactly.
 """
 
 
@@ -26,15 +33,15 @@ class Metrics:
 
 class AdaptiveGraphAgent:
     """
-    V3 design:
+    V4 experiment:
       taxonomy -> retrieve failure-specific prompt patches
       -> primary solver
-      -> deterministic verifier
-      -> second solver only if the current query fails verification
-      -> critic only if repair remains unresolved
+      -> deterministic executable verifier
+      -> second solver only if this query fails
+      -> critic only if the second attempt also fails
 
-    The key change from V2 is that historical risk NEVER triggers extra LLM calls
-    by itself. Taxonomy knowledge is used first to improve the primary attempt.
+    This keeps inference cheap while allowing cross-query failure knowledge to
+    improve the first attempt on harder graph tasks.
     """
 
     def __init__(self, llm, run_dir, use_taxonomy=True):
@@ -46,10 +53,15 @@ class AdaptiveGraphAgent:
         self.use_taxonomy = use_taxonomy
         self.metrics = Metrics()
 
+    def _base_prompt(self, ex):
+        if ex.task == "shortest_path":
+            return SHORTEST_PATH_PROMPT
+        return CONNECTIVITY_PROMPT
+
     def _prompt(self, ex):
-        prompt = BASE_PROMPT
+        prompt = self._base_prompt(ex)
         if self.use_taxonomy:
-            patches = self.taxonomy.relevant_patches(ex, top_k=2)
+            patches = self.taxonomy.relevant_patches(ex, top_k=3)
             if patches:
                 prompt += "\nRecurring failure precautions learned from prior queries:\n"
                 for p in patches:
@@ -57,7 +69,7 @@ class AdaptiveGraphAgent:
         return prompt
 
     def _call(self, system, user):
-        r = self.llm.complete(system, user, max_tokens=240)
+        r = self.llm.complete(system, user, max_tokens=320)
         self.metrics.add(r.usage)
         return parse_candidate(r.text)
 
@@ -65,7 +77,6 @@ class AdaptiveGraphAgent:
         decision = self.controller.decide()
         prompt = self._prompt(ex)
 
-        # 1) Always start with exactly one primary solver call.
         c1 = self._call(prompt, ex.question)
         v1 = verify(ex, c1)
         final, final_v = c1, v1
@@ -75,12 +86,9 @@ class AdaptiveGraphAgent:
         used_second = False
         used_critic = False
 
-        # 2) Escalate only when THIS query actually fails deterministic verification.
         if (not v1.ok) and decision.allow_second_solver:
             self.metrics.repairs += 1
             used_second = True
-
-            # Use both current failure feedback and cross-query taxonomy patches.
             repair_context = f"""
 
 PREVIOUS CANDIDATE:
@@ -89,19 +97,13 @@ PREVIOUS CANDIDATE:
 CURRENT VERIFIER FAILURE:
 {v1.code}: {v1.feedback}
 
-Repair the answer. Reconstruct the graph if necessary, run an explicit BFS/DFS,
-and validate every consecutive edge in any witness path.
+Repair the answer from scratch. Follow the graph weights exactly and validate the result.
 Return ONLY the required JSON object.
 """
             second = self._call(prompt, ex.question + repair_context)
             second_v = verify(ex, second)
+            final, final_v = second, second_v
 
-            if second_v.ok:
-                final, final_v = second, second_v
-            else:
-                final, final_v = second, second_v
-
-        # 3) Critic is a last-resort current-query mechanism, never a history-only trigger.
         if (
             used_second
             and second is not None
@@ -111,7 +113,6 @@ Return ONLY the required JSON object.
         ):
             self.metrics.critics += 1
             used_critic = True
-
             critic_prompt = f"""TASK:
 {ex.question}
 
@@ -123,9 +124,9 @@ CANDIDATE B:
 {second.raw}
 Verifier B: {second_v.code} - {second_v.feedback}
 
-Both attempts failed executable verification. Re-solve the graph task carefully.
-Use explicit BFS/DFS and verify every claimed path edge.
-Return ONLY JSON in the same schema.
+Both attempts failed executable verification. Re-solve carefully.
+For weighted shortest path, use Dijkstra-style cumulative-cost reasoning.
+Return ONLY the task's JSON schema.
 """
             cc = self._call(
                 "You are a graph-reasoning critic and final repair agent.",
@@ -135,14 +136,12 @@ Return ONLY JSON in the same schema.
             final, final_v = cc, vc
 
         first_failure = None if v1.ok else v1.code
-
-        # Learn only from the first-attempt outcome so taxonomy measures what the
-        # primary policy still tends to get wrong across queries.
         if self.use_taxonomy:
             self.taxonomy.observe(ex, first_failure)
 
         row = {
             "example_id": ex.example_id,
+            "task": ex.task,
             "gold": ex.gold,
             "compute_level": decision.level,
             "first_try_ok": v1.ok,
