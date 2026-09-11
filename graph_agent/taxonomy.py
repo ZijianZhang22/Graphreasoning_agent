@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
+
 @dataclass
 class FailureRule:
     code: str
@@ -11,22 +12,30 @@ class FailureRule:
     repair_hint: str
     risk: float
 
+
 DEFAULT_HINTS = {
-    "FORMAT_ERROR": "Return only the required JSON schema.",
+    "FORMAT_ERROR": "Return only valid JSON in the task-specific schema.",
     "MISSING_WITNESS": "If answering yes, explicitly construct a source-to-target witness path.",
-    "WRONG_ENDPOINTS": "Check that the witness starts at the source and ends at the target.",
-    "NON_EDGE_IN_PATH": "Validate every consecutive edge in the witness before returning it.",
-    "WRONG_CONNECTIVITY": "Run an explicit BFS/DFS instead of guessing from local adjacency."
+    "MISSING_PATH": "Always return a concrete source-to-target path for shortest-path tasks.",
+    "WRONG_ENDPOINTS": "Check that the path starts at the requested source and ends at the requested target.",
+    "NON_EDGE_IN_PATH": "Validate every consecutive edge in the path before returning it.",
+    "WRONG_CONNECTIVITY": "Run an explicit BFS/DFS instead of guessing from local adjacency.",
+    "NON_OPTIMAL_PATH": "For weighted shortest path, compare cumulative costs and use Dijkstra-style reasoning rather than minimizing hop count.",
+    "MISSING_WEIGHT": "Report total_weight explicitly after summing all edge weights on the final path.",
+    "WRONG_WEIGHT": "Recompute the sum of edge weights along the returned path and make total_weight match it exactly.",
 }
+
 
 class LearnedTaxonomy:
     """
-    AdaMAST-inspired lightweight taxonomy learner for the first experiment.
+    Lightweight cross-query failure learner inspired by AdaMAST.
 
-    This is deliberately simpler than the full AdaMAST generation/refinement
-    pipeline: it learns failure frequencies and reusable repair policies from
-    traces, then turns them into a risk score and prompt patches.
+    It stores recurring failure modes and retrieves the most relevant repair
+    instructions for future examples. In this prototype the failure vocabulary
+    comes from executable graph verifiers; the full AdaMAST runtime can later
+    replace this class to induce/refine taxonomy entries automatically.
     """
+
     def __init__(self, path):
         self.path = Path(path)
         self.counts = Counter()
@@ -40,10 +49,10 @@ class LearnedTaxonomy:
     def signature(ex):
         n = ex.graph.number_of_nodes()
         m = ex.graph.number_of_edges()
-        density = 0.0 if n < 2 else 2*m/(n*(n-1))
-        bucket = "small" if n <= 10 else "medium" if n <= 30 else "large"
-        dens = "sparse" if density < 0.15 else "dense"
-        return f"{bucket}:{dens}"
+        density = 0.0 if n < 2 else 2 * m / (n * (n - 1))
+        size_bucket = "small" if n <= 10 else "medium" if n <= 30 else "large"
+        dens_bucket = "sparse" if density < 0.15 else "dense"
+        return f"{ex.task}:{size_bucket}:{dens_bucket}"
 
     def observe(self, ex, failure_code):
         self.total += 1
@@ -55,33 +64,24 @@ class LearnedTaxonomy:
         self._save()
 
     def _rebuild(self):
-        rules = {}
         denom = max(self.total, 1)
-        for code, count in self.counts.items():
-            rules[code] = FailureRule(
+        self.rules = {
+            code: FailureRule(
                 code=code,
                 count=count,
                 repair_hint=DEFAULT_HINTS.get(code, "Re-check this failure mode explicitly."),
-                risk=count/denom,
+                risk=count / denom,
             )
-        self.rules = rules
+            for code, count in self.counts.items()
+        }
 
-    def relevant_patches(self, ex, top_k=2):
+    def relevant_patches(self, ex, top_k=3):
         sig = self.signature(ex)
         local = self.by_signature.get(sig, Counter())
-        ranked = []
-        for code, count in local.most_common():
-            if code in self.rules:
-                ranked.append(self.rules[code])
+        ranked = [self.rules[code] for code, _ in local.most_common() if code in self.rules]
         if not ranked:
             ranked = sorted(self.rules.values(), key=lambda r: r.count, reverse=True)
         return ranked[:top_k]
-
-    def risk(self, ex):
-        sig = self.signature(ex)
-        local = self.by_signature.get(sig, Counter())
-        seen = sum(local.values())
-        return min(1.0, seen / max(3, self.total * 0.25))
 
     def _save(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
