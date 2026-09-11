@@ -23,18 +23,15 @@ DEFAULT_HINTS = {
     "NON_OPTIMAL_PATH": "For weighted shortest path, compare cumulative costs and use Dijkstra-style reasoning rather than minimizing hop count.",
     "MISSING_WEIGHT": "Report total_weight explicitly after summing all edge weights on the final path.",
     "WRONG_WEIGHT": "Recompute the sum of edge weights along the returned path and make total_weight match it exactly.",
+    "MISSING_WEIGHT_ARG": "When calling NetworkX weighted shortest-path functions, always pass weight='weight'.",
+    "UNSAFE_OR_INVALID_CODE": "Use only the allowed NetworkX calls and assign the final dictionary to RESULT. Do not import modules, define functions, loop, or print.",
+    "EXECUTION_ERROR": "Use the provided variables G, SOURCE, TARGET and simple NetworkX calls that execute directly.",
+    "BAD_RESULT": "Assign RESULT to a plain dictionary containing exactly the task output fields.",
 }
 
 
 class LearnedTaxonomy:
-    """
-    Lightweight cross-query failure learner inspired by AdaMAST.
-
-    It stores recurring failure modes and retrieves the most relevant repair
-    instructions for future examples. In this prototype the failure vocabulary
-    comes from executable graph verifiers; the full AdaMAST runtime can later
-    replace this class to induce/refine taxonomy entries automatically.
-    """
+    """Lightweight cross-query failure learner inspired by AdaMAST."""
 
     def __init__(self, path):
         self.path = Path(path)
