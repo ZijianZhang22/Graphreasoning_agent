@@ -1,0 +1,7 @@
+openai>=1.40.0
+networkx>=3.2
+pandas>=2.2
+tenacity>=8.2
+pytest>=8.0
+# Optional, only if you want the real AdaMAST runtime:
+# adamast
