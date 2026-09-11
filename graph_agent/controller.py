@@ -1,21 +1,31 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
+
 @dataclass
 class ControlDecision:
     level: str
-    solvers: int
-    use_critic: bool
-    force_strong_check: bool
+    allow_second_solver: bool
+    allow_critic: bool
+
 
 class TaxonomyGuidedController:
     """
-    Main proposed difference from vanilla AdaMAST:
-    learned failures do not only generate reflection; they allocate inference compute.
+    V3 controller.
+
+    Historical taxonomy no longer triggers extra LLM calls by itself.
+    Extra compute is current-query evidence driven:
+      1) primary solver always runs once;
+      2) second solver is allowed only after verifier failure;
+      3) critic is allowed only if the second attempt also fails / remains unresolved.
+
+    The learned taxonomy is used to adapt the primary prompt and repair strategy,
+    not to eagerly spend more inference compute.
     """
-    def decide(self, risk: float) -> ControlDecision:
-        if risk < 0.25:
-            return ControlDecision("low", 1, False, False)
-        if risk < 0.60:
-            return ControlDecision("medium", 2, False, False)
-        return ControlDecision("high", 2, True, True)
+
+    def decide(self) -> ControlDecision:
+        return ControlDecision(
+            level="verify_then_escalate",
+            allow_second_solver=True,
+            allow_critic=True,
+        )
