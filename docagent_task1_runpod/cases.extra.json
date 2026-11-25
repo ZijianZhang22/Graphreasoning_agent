@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "_comment": "OPTIONAL extension, NOT part of Xiangrui's required four Task 1 cases. Two natural commits with independently archived human-readable source documentation/changelogs. Reviewer sign-off pending. Never pool with C01-C04 as if the required four had expanded.",
+  "cases": [
+    {
+      "case_id": "C05",
+      "category": "interface_drift",
+      "project_url": "https://github.com/pallets/flask/commit/c2810ffdd2f2becbc37d35f63b69034b8b9ed5b8",
+      "repo": {
+        "kind": "git",
+        "url": "https://github.com/pallets/flask.git"
+      },
+      "s": "9e686d93b69f0e73f801cc11a57839f4dfe2ca1a",
+      "t": "c2810ffdd2f2becbc37d35f63b69034b8b9ed5b8",
+      "paths": {
+        "s": [
+          "src/flask/helpers.py",
+          "CHANGES.rst"
+        ],
+        "t": [
+          "src/flask/helpers.py",
+          "CHANGES.rst"
+        ]
+      },
+      "symbols": {
+        "s": [
+          "send_file"
+        ],
+        "t": [
+          "send_file"
+        ]
+      },
+      "claim": {
+        "claim_id": "flask.send_file.attachment_filename",
+        "statement": "The `send_file` helper accepts the legacy `attachment_filename` keyword argument for a downloaded attachment filename (documented as being replaced by `download_name`).",
+        "covered_path": "src/flask/helpers.py",
+        "predicate": {
+          "type": "signature_has_param",
+          "qualname": "send_file",
+          "param": "attachment_filename"
+        }
+      },
+      "change_origin": "natural_commit",
+      "note_origin": "historical_document",
+      "task": {
+        "kind": "localize",
+        "prompt": "In the current Flask source, what keyword argument should a caller use to specify the displayed download filename in `flask.send_file`? Identify the argument name and function location without editing files."
+      },
+      "oracle": {
+        "description": "Evaluator-only expected current keyword download_name; grading checks the answer, not a Flask HTTP request."
+      },
+      "human_review": {
+        "status": "pending",
+        "note": "Historical CHANGES.rst and send_file source docstring at s record the rename and deprecated alias; verify exact quoted evidence and the full post-removal signature independently."
+      }
+    },
+    {
+      "case_id": "C06",
+      "category": "harmless_change",
+      "project_url": "https://github.com/psf/requests/commit/561e4b6889f53584c39a67f8794c53a414f68481",
+      "repo": {
+        "kind": "git",
+        "url": "https://github.com/psf/requests.git"
+      },
+      "s": "8f6cda9969f4a98c45ea2922f6bcbefc02256202",
+      "t": "561e4b6889f53584c39a67f8794c53a414f68481",
+      "paths": {
+        "s": [
+          "src/requests/api.py",
+          "docs/user/quickstart.rst"
+        ],
+        "t": [
+          "src/requests/api.py",
+          "docs/user/quickstart.rst"
+        ]
+      },
+      "symbols": {
+        "s": [
+          "request"
+        ],
+        "t": [
+          "request"
+        ]
+      },
+      "claim": {
+        "claim_id": "requests.api.request",
+        "statement": "The `request` function constructs and sends a Request (as documented by its `src/requests/api.py` docstring).",
+        "covered_path": "src/requests/api.py",
+        "predicate": {
+          "type": "symbol_owner",
+          "qualname": "request"
+        }
+      },
+      "change_origin": "natural_commit",
+      "note_origin": "historical_document",
+      "task": {
+        "kind": "localize",
+        "prompt": "Identify the current Python file and function that construct and send Requests' general HTTP Request for a specified method, before specialized convenience wrappers such as GET. Give the repository-relative file path and function name; do not edit code."
+      },
+      "oracle": {
+        "description": "Expected location held in evaluator file. The change only adds typing; method-dispatch implementation remains in the same function."
+      },
+      "human_review": {
+        "status": "pending",
+        "note": "Historical inline documentation in src/requests/api.py at s says 'Constructs and sends a Request'; docs/user/quickstart.rst also describes public API usage. Check behavior and source documentation with a second reviewer."
+      }
+    }
+  ]
+}
