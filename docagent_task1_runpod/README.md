@@ -239,3 +239,54 @@ reported as `primary` and `extra`; never pool their pass rates.
 Run `python3 test_repeated.py` first for an offline accounting smoke test.
 The old `bash run_all.sh` remains available for the original one-round
 8-session experiment.
+
+
+## Task 1 acceptance evidence supplement (no GPU rerun)
+
+Xiangrui's original requirement asks for independent *behavioral* evidence
+around C02's removed API keyword, actual pytest selector collection / exit
+codes / node IDs for C03, and independent review of all four source facts.
+The source bundles and 24 original agent runs remain unchanged.
+
+The supplemental auditor uses **already cached Git source snapshots** on
+RunPod. It executes Python imports and pytest collection against pinned s/t,
+checks ownership in C01, and confirms unchanged executable AST in C04. It
+also retries the released DocAgent **unmodified** `diff_since` and
+`match_any` functions from a shared-object Git worktree, because the
+original `cases.py` gate made a temporary local clone whose history can
+exclude old commits. This is an *additional diagnostic*, not a retroactive
+replacement for the original failed gate logs. Missing dependencies are
+reported as incomplete checks, not as successful behavior evidence.
+
+From your existing RunPod, run:
+
+```bash
+cd /workspace/Graphreasoning_agent
+git pull
+cd docagent_task1_runpod
+python3 -m py_compile audit_task1_evidence.py
+
+python3 audit_task1_evidence.py \
+  --runs /workspace/docagent-task1/repeat_batches/20261125T213451Z-5947/runs/primary/round_01
+```
+
+The command prints paths to `audit_summary.json` and one ZIP under
+`/workspace/docagent-task1/acceptance_audits/`.
+
+**Note on test dependencies:** If C03 reports `No module named pytest`,
+install pytest in the Pod's Python environment and rerun only the audit:
+`python3 -m pip install pytest`. Old dependencies may be incompatible with
+the Pod's Python; preserve the exact error and do not report a passing test
+collection in that case. The supplemental audit does not run pytest test
+bodies, only real `--collect-only` selections as required for evidence.
+
+Check `C02_api_behavior.json` for actual API acceptance and exceptions,
+`C03_pytest_collection.json` for exit codes, counts and selector node IDs,
+and `C01_gate.json` through `C04_gate.json` for exact released-helper
+file-level changes. The new `replayed/*.md` are rebuilt offline with no
+model invocation. The principal original data is still the earlier ZIP.
+
+**Human sign-off is not automated.** Have a second researcher independently
+complete [TASK1_REVIEW_TEMPLATE.md](TASK1_REVIEW_TEMPLATE.md), recording
+their own s/t labels before seeing the pre-existing decisions. The four
+`human_review` fields remain pending until that work is genuinely done.
