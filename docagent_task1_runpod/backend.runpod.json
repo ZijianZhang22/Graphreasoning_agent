@@ -1,0 +1,19 @@
+{
+  "name": "runpod-qwen3-8b-toolloop",
+  "command": [
+    "{python}",
+    "{experiments}/backends/toolloop_agent.py"
+  ],
+  "settings": {
+    "api_style": "ollama",
+    "base_url": "http://127.0.0.1:11434",
+    "model": "qwen3:8b",
+    "api_key_env": null,
+    "temperature": 0,
+    "seed": 20261119,
+    "num_ctx": 16384,
+    "think": false,
+    "location": "runpod",
+    "quantization": null
+  }
+}
