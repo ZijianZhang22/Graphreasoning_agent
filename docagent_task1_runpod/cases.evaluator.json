@@ -1,0 +1,13 @@
+{
+  "_comment": "Evaluator-only localization answers. This file is loaded by cases.py on the grading side and is NOT placed in agent workspaces.",
+  "C01": {
+    "answer_any_of": [
+      "werkzeug/http.py"
+    ]
+  },
+  "C03": {
+    "answer_any_of": [
+      "tests/test_itsdangerous/test_serializer.py::TestSerializer"
+    ]
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "_comment": "Four actual upstream Git-history changes, with researcher-authored memory notes and researcher-authored tasks. These are controlled observations over real commits, not historically observed stale documentation incidents. C00 remains the upstream synthetic smoke demo. Model runs not included.",
+  "cases": [
+    {
+      "case_id": "C01",
+      "category": "moved_owner",
+      "project_url": "https://github.com/pallets/werkzeug/commit/0e2cd5013f29cf18eef124e2061929c7cdb2df25",
+      "repo": {
+        "kind": "git",
+        "url": "https://github.com/pallets/werkzeug.git"
+      },
+      "s": "d9caf5b88cc2a5247de779bd13a69b63d60bd1c4",
+      "t": "0e2cd5013f29cf18eef124e2061929c7cdb2df25",
+      "paths": {
+        "s": [
+          "werkzeug/_internal.py"
+        ],
+        "t": [
+          "werkzeug/http.py"
+        ]
+      },
+      "symbols": {
+        "s": [
+          "_dump_date"
+        ],
+        "t": [
+          "_dump_date"
+        ]
+      },
+      "claim": {
+        "claim_id": "werkzeug.date_owner",
+        "statement": "The helper `_dump_date` that formats HTTP and cookie date strings is implemented in `werkzeug/_internal.py`.",
+        "covered_path": "werkzeug/_internal.py",
+        "predicate": {
+          "type": "symbol_owner",
+          "qualname": "_dump_date"
+        }
+      },
+      "change_origin": "natural_commit",
+      "note_origin": "researcher_authored",
+      "task": {
+        "kind": "localize",
+        "prompt": "Identify the repository-relative Python file and function that currently implement the common date-string formatter used by both the HTTP-date and cookie-date helpers. Report the exact file path and function name; do not edit code."
+      },
+      "oracle": {
+        "description": "Answer is compared against evaluator-only current source path and function name; no patch is expected."
+      },
+      "human_review": {
+        "status": "pending",
+        "note": "The selected upstream commit moves _dump_date; independently review the source and oracle before reporting experimental observations."
+      }
+    },
+    {
+      "case_id": "C02",
+      "category": "interface_drift",
+      "project_url": "https://github.com/urllib3/urllib3/releases/tag/2.0.0",
+      "repo": {
+        "kind": "git",
+        "url": "https://github.com/urllib3/urllib3.git"
+      },
+      "s": "9b95f29c575d73260ec4f5a8c0ea368cf242019e",
+      "t": "6446fef0cf432ca035169602a1447a0d8ef53e80",
+      "paths": {
+        "s": [
+          "src/urllib3/util/retry.py"
+        ],
+        "t": [
+          "src/urllib3/util/retry.py"
+        ]
+      },
+      "symbols": {
+        "s": [
+          "Retry.__init__"
+        ],
+        "t": [
+          "Retry.__init__"
+        ]
+      },
+      "claim": {
+        "claim_id": "urllib3.retry_method_keyword",
+        "statement": "The `Retry` constructor in `src/urllib3/util/retry.py` accepts `method_whitelist` to specify which HTTP methods may be retried.",
+        "covered_path": "src/urllib3/util/retry.py",
+        "predicate": {
+          "type": "signature_has_param",
+          "qualname": "Retry.__init__",
+          "param": "method_whitelist"
+        }
+      },
+      "change_origin": "natural_commit",
+      "note_origin": "researcher_authored",
+      "task": {
+        "kind": "patch",
+        "prompt": "Update the default retry-method policy in `src/urllib3/util/retry.py` so that constructing `Retry()` with no custom method set permits retries for GET and HEAD only. Preserve callers' ability to override the permitted method set explicitly. Make the smallest source change; do not disable retries altogether."
+      },
+      "oracle": {
+        "command": [
+          "{python}",
+          "-c",
+          "import sys; sys.path.insert(0, 'src'); from urllib3.util.retry import Retry; assert Retry().allowed_methods == frozenset({'GET', 'HEAD'}), Retry().allowed_methods; assert Retry(allowed_methods=frozenset({'POST'})).allowed_methods == frozenset({'POST'}); print('default and explicit override behave as expected')"
+        ],
+        "expect_exit_code": 0,
+        "timeout_s": 60
+      },
+      "human_review": {
+        "status": "pending",
+        "note": "Source signatures verified at release-commit SHAs; request second-person review and independent oracle check on RunPod."
+      }
+    },
+    {
+      "case_id": "C03",
+      "category": "obsolete_test",
+      "project_url": "https://github.com/pallets/itsdangerous/commit/c493cd846e9dc4750e07c9e46785d265e26bf2ca",
+      "repo": {
+        "kind": "git",
+        "url": "https://github.com/pallets/itsdangerous.git"
+      },
+      "s": "f685200bda58808ca78735372e6d39fee971c00d",
+      "t": "c493cd846e9dc4750e07c9e46785d265e26bf2ca",
+      "paths": {
+        "s": [
+          "tests/test_serializer.py"
+        ],
+        "t": [
+          "tests/test_itsdangerous/test_serializer.py"
+        ]
+      },
+      "symbols": {
+        "s": [
+          "TestSerializer"
+        ],
+        "t": [
+          "TestSerializer"
+        ]
+      },
+      "claim": {
+        "claim_id": "itsdangerous.serializer_test_selector",
+        "statement": "The serializer test class `TestSerializer` is in `tests/test_serializer.py`; its focused pytest selector is `tests/test_serializer.py::TestSerializer`.",
+        "covered_path": "tests/test_serializer.py",
+        "predicate": {
+          "type": "symbol_owner",
+          "qualname": "TestSerializer"
+        }
+      },
+      "change_origin": "natural_commit",
+      "note_origin": "researcher_authored",
+      "task": {
+        "kind": "localize",
+        "prompt": "Find the current focused pytest file-and-class selector for the existing serializer test class in this checkout. Return the full repository-relative selector (path::ClassName) and no other alternatives; do not edit code."
+      },
+      "oracle": {
+        "description": "Expected pytest selector is held only in cases.evaluator.json. The case's localize oracle validates the answer string, not actual pytest collection."
+      },
+      "human_review": {
+        "status": "pending",
+        "note": "GitHub rename metadata confirms tests/test_serializer.py became tests/test_itsdangerous/test_serializer.py; independently verify collection environment if reporting executed tests."
+      }
+    },
+    {
+      "case_id": "C04",
+      "category": "harmless_change",
+      "project_url": "https://github.com/pypa/sampleproject/commit/c54b977c7ebf379f957db1cf7ce776608c67a521",
+      "repo": {
+        "kind": "git",
+        "url": "https://github.com/pypa/sampleproject.git"
+      },
+      "s": "00bed2f909a40aee9a7b3d2a13dd37f8054d3928",
+      "t": "c54b977c7ebf379f957db1cf7ce776608c67a521",
+      "paths": {
+        "s": [
+          "src/sample/simple.py"
+        ],
+        "t": [
+          "src/sample/simple.py"
+        ]
+      },
+      "symbols": {
+        "s": [
+          "add_one"
+        ],
+        "t": [
+          "add_one"
+        ]
+      },
+      "claim": {
+        "claim_id": "sampleproject.add_one_owner",
+        "statement": "The function `add_one(number)` is implemented in `src/sample/simple.py` and returns the given number plus one.",
+        "covered_path": "src/sample/simple.py",
+        "predicate": {
+          "type": "symbol_owner",
+          "qualname": "add_one"
+        }
+      },
+      "change_origin": "natural_commit",
+      "note_origin": "researcher_authored",
+      "task": {
+        "kind": "patch",
+        "prompt": "Add a small function named `add_two(number)` in `src/sample/simple.py` that returns its numeric argument plus two. Preserve the existing `add_one(number)` behavior and the module's public simplicity. Keep the change minimal."
+      },
+      "oracle": {
+        "command": [
+          "{python}",
+          "-c",
+          "import sys; sys.path.insert(0, 'src'); from sample.simple import add_one, add_two; assert add_one(5) == 6 and add_one(-1) == 0; assert add_two(5) == 7 and add_two(-1) == 1 and add_two(0.5) == 2.5; print('add_one preserved and add_two works')"
+        ],
+        "expect_exit_code": 0,
+        "timeout_s": 60
+      },
+      "human_review": {
+        "status": "pending",
+        "note": "Upstream commit only removes two trailing blank lines; add_one body is unchanged. Request independent source and oracle review."
+      }
+    }
+  ]
+}

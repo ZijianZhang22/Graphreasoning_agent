@@ -89,3 +89,34 @@ Results are under `/workspace/docagent-task1/runs/real/`:
   unless you back them up. Stop the GPU Pod when finished.
 
 The original graph-reasoning experiment at the repository root is unchanged.
+
+
+## Four prepared real-history cases (C01–C04)
+
+This branch now includes `cases.json`, `cases.evaluator.json`,
+`CASE_EVIDENCE.md`, and `verify_case_evidence.py`.
+These are **real source-history changes**, with *researcher-authored notes*.
+They are **not** real-model results or proven historical documentation incidents.
+Details and source links: [CASE_EVIDENCE.md](CASE_EVIDENCE.md).
+
+After the RunPod setup and synthetic demo:
+
+```bash
+bash launch.sh validate "$PWD/cases.json"
+python3 verify_case_evidence.py --cache /workspace/docagent-task1/cache
+for id in C01 C02 C03 C04; do
+  bash launch.sh run "$PWD/cases.json" "$id"
+done
+bash launch.sh report real
+```
+
+- **C01:** Werkzeug moved `_dump_date` to `werkzeug/http.py`.
+- **C02:** urllib3 removed `Retry(method_whitelist=...)`.
+- **C03:** itsdangerous moved `tests/test_serializer.py` into a test package.
+- **C04:** sampleproject removed only trailing blank lines; `add_one` stayed correct.
+
+The historical Git sources have been inspected; **RunPod cloning, end-to-end
+validation and Qwen3:8B model inference have not yet been executed**.
+Each case requests independent human review (`status: pending`) before a
+research report claims verified behavior. C03 currently evaluates a
+localization answer; it does not execute pytest collection.
