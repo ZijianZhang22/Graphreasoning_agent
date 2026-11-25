@@ -54,8 +54,15 @@ def save(path, obj):
 
 
 def show(repo, revision, path):
-    result = run(["git", "-C", str(repo), "show", f"{revision}:{path}"])
-    return result["stdout"] if result["exit_code"] == 0 else None
+    # Source must not be clipped: full AST required for both ownership and
+    # no-op-change verification. The generic logging helper clips stdout.
+    try:
+        p = subprocess.run(["git", "-C", str(repo), "show", f"{revision}:{path}"],
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=90)
+        return p.stdout if p.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        return None
 
 
 def export_tree(repo, rev, dest):
