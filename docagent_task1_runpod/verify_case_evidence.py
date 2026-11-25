@@ -38,14 +38,14 @@ def run(cache):
     assert definition(src(cache, "C01", w_t, "werkzeug/http.py"), "_dump_date")
     cases["C01"] = "PASS: _dump_date moved from werkzeug/_internal.py to werkzeug/http.py"
 
-    u_s, u_t = "9b95f29c575d73260ec4f5a8c0ea368cf242019e", "6446fef0cf432ca035169602a1447a0d8ef53e80"
+    u_s, u_t = "ce16b219a77ed38d76b7b1d4b55ad9f757f66361", "6446fef0cf432ca035169602a1447a0d8ef53e80"
     path = "src/urllib3/util/retry.py"
     before = ctor_params(src(cache, "C02", u_s, path))
     after = ctor_params(src(cache, "C02", u_t, path))
     assert "method_whitelist" in before
     assert "method_whitelist" not in after
     assert "allowed_methods" in after
-    cases["C02"] = "PASS: Retry.__init__ renamed method_whitelist to allowed_methods"
+    cases["C02"] = "PASS: Retry.__init__ removed deprecated method_whitelist alias; allowed_methods remains"
 
     i_s, i_t = "f685200bda58808ca78735372e6d39fee971c00d", "c493cd846e9dc4750e07c9e46785d265e26bf2ca"
     old = "tests/test_serializer.py"
