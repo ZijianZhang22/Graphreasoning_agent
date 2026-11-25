@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "_comment": "OPTIONAL extension, NOT part of Xiangrui's required four Task 1 cases. Two natural commits with independently archived human-readable source documentation/changelogs. Reviewer sign-off pending. Never pool with C01-C04 as if the required four had expanded.",
+  "_comment": "OPTIONAL extension only. Two natural historical code changes with verifiable contemporaneous human-readable documentation. The stored notes are researcher-extracted/paraphrased, hence snapshot_generated, NOT exact historical document statements. Independent reviewer sign-off pending. Keep separate from required C01-C04.",
   "cases": [
     {
       "case_id": "C05",
@@ -41,7 +41,7 @@
         }
       },
       "change_origin": "natural_commit",
-      "note_origin": "historical_document",
+      "note_origin": "snapshot_generated",
       "task": {
         "kind": "localize",
         "prompt": "In the current Flask source, what keyword argument should a caller use to specify the displayed download filename in `flask.send_file`? Identify the argument name and function location without editing files."
@@ -92,7 +92,7 @@
         }
       },
       "change_origin": "natural_commit",
-      "note_origin": "historical_document",
+      "note_origin": "snapshot_generated",
       "task": {
         "kind": "localize",
         "prompt": "Identify the current Python file and function that construct and send Requests' general HTTP Request for a specified method, before specialized convenience wrappers such as GET. Give the repository-relative file path and function name; do not edit code."
