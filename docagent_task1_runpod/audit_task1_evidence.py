@@ -133,7 +133,23 @@ def inspect_c04(case):
 
 
 def retry_probe(snapshot):
-    code = (
+    # Older urllib3 vendors six 1.12, which registers a PEP 302-only
+    # meta-path importer. Modern Python can require find_spec (PEP 451).
+    # Adapt the *interpreter's* import mechanism for that legacy finder;
+    # do not modify the pinned repository or Retry implementation.
+    legacy_import_shim = (
+        "import importlib.util, sys\n"
+        "class _LegacySixFinderShim:\n"
+        "  def find_spec(self, fullname, path=None, target=None):\n"
+        "    for finder in tuple(sys.meta_path):\n"
+        "      if type(finder).__name__ == '_SixMetaPathImporter':\n"
+        "        old = finder.find_module(fullname, path)\n"
+        "        if old is not None:\n"
+        "          return importlib.util.spec_from_loader(fullname, old, is_package=old.is_package(fullname))\n"
+        "    return None\n"
+        "sys.meta_path.insert(0, _LegacySixFinderShim())\n"
+    )
+    code = legacy_import_shim + (
         "import json, warnings, urllib3\n"
         "from urllib3.util.retry import Retry\n"
         "warnings.simplefilter('ignore', DeprecationWarning)\n"
@@ -150,6 +166,9 @@ def retry_probe(snapshot):
     env = os.environ.copy()
     env["PYTHONPATH"] = str(snapshot / "src")
     result = run([sys.executable, "-c", code], cwd=snapshot, env=env, timeout=40)
+    result["legacy_six_compatibility_shim"] = True
+    result["compatibility_note"] = ("PEP 302 to 451 importer adapter in subprocess only; "
+                                   "the pinned repo and Retry behavior are untouched.")
     try:
         data = json.loads(result["stdout"].strip().splitlines()[-1])
         expected_root = str((snapshot / "src").resolve())
@@ -200,6 +219,11 @@ def inspect_c02(case, out):
         after.get("old_keyword", {}).get("exception") == "TypeError" and
         after.get("new_keyword", {}).get("accepted") is True
     )
+    if not records["behavior_verified"]:
+        records["incomplete_reason"] = (
+            "Old and new runtime acceptance not both confirmed. Inspect s/t stderr "
+            "and loaded_current_snapshot before reporting a behavior pass."
+        )
     save(out / "C02_api_behavior.json", records)
     return records
 
@@ -227,6 +251,12 @@ def inspect_c03(case, out):
         stale.get("exit_code") not in (0, None) and
         current.get("exit_code") == 0 and (current.get("collected_count") or 0) > 0
     )
+    if any("No module named pytest" in x.get("stderr", "") for x in
+           (old, stale, current)):
+        records["incomplete_reason"] = (
+            "Missing pytest in the SAME interpreter used by audit_task1_evidence.py "
+            f"({sys.executable}); install it there and repeat the audit."
+        )
     save(out / "C03_pytest_collection.json", records)
     return records
 
@@ -238,6 +268,12 @@ def helper_gate(case):
     probe = run(["git", "-C", str(repo), "diff", "--name-only",
                  "--diff-filter=ACMRD", case["s"], case["t"]])
     evidence["direct_git_diff"] = probe
+    # Git rename detection often reports only the destination name, while
+    # the old covered path no longer exists. Do not mislabel this as a
+    # release-gate detection. Keep separate path-existence evidence.
+    old_path = case["claim"]["covered_path"]
+    evidence["covered_path_exists_at_s"] = show(repo, case["s"], old_path) is not None
+    evidence["covered_path_exists_at_t"] = show(repo, case["t"], old_path) is not None
     if not HELPER.is_file():
         evidence["error"] = f"missing released helper: {HELPER}"
         return evidence
