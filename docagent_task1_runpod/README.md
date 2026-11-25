@@ -290,3 +290,27 @@ model invocation. The principal original data is still the earlier ZIP.
 complete [TASK1_REVIEW_TEMPLATE.md](TASK1_REVIEW_TEMPLATE.md), recording
 their own s/t labels before seeing the pre-existing decisions. The four
 `human_review` fields remain pending until that work is genuinely done.
+
+
+### If the supplemental audit reports missing pytest (observed 2026-11-25)
+
+The actual Pod ran `/usr/bin/python3`, and that interpreter lacked pytest.
+A pip installation into *another Python environment* will not resolve it.
+Prefer an isolated environment dedicated to the audit:
+
+```bash
+cd /workspace/Graphreasoning_agent/docagent_task1_runpod
+python3 -m venv /workspace/docagent-task1/audit-venv
+/workspace/docagent-task1/audit-venv/bin/python -m pip install pytest
+/workspace/docagent-task1/audit-venv/bin/python audit_task1_evidence.py --runs \
+  /workspace/docagent-task1/repeat_batches/20261125T213451Z-5947/runs/primary/round_01
+```
+
+If the system lacks `venv`, install the matching `python3-venv` package.
+The Python interpreter running the audit must be the one with pytest installed.
+The C02 old-version probe now includes an in-process import compatibility
+adapter for legacy vendored `six` under newer Python; it does not change the
+source snapshot or original Task 1 tests. The newer C03 gate evidence also
+records path existence separately from Git's rename-detected file list.
+A completed collection probe still requires a real nonzero pytest collection
+and matching exit code, not just the lack of an import error.
