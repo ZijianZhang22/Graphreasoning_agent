@@ -2,13 +2,13 @@
 # RunPod launcher for DocAgent Task 1. Does not modify the upstream repository.
 set -Eeuo pipefail
 
-HERE="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-WORKDIR="\${DOCAGENT_WORKDIR:-/workspace/docagent-task1}"
-UPSTREAM_DIR="\${DOCAGENT_UPSTREAM_DIR:-$WORKDIR/DocAgent}"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKDIR="${DOCAGENT_WORKDIR:-/workspace/docagent-task1}"
+UPSTREAM_DIR="${DOCAGENT_UPSTREAM_DIR:-$WORKDIR/DocAgent}"
 UPSTREAM_REF="d44ab1bb365fb7c151577dbd321a52fbf06d38ae"
 UPSTREAM_URL="https://github.com/xiangruiSun/DocAgent.git"
-MODEL="\${QWEN_MODEL:-qwen3:8b}"
-RUNS_DIR="\${DOCAGENT_RUNS_DIR:-$WORKDIR/runs}"
+MODEL="${QWEN_MODEL:-qwen3:8b}"
+RUNS_DIR="${DOCAGENT_RUNS_DIR:-$WORKDIR/runs}"
 BACKEND_CONFIG="$WORKDIR/backend.runpod.json"
 CASE_DRIVER="$UPSTREAM_DIR/experiments/case_studies/cases.py"
 
@@ -104,8 +104,8 @@ run_case() {
     --manifest "$(realpath "$manifest")" \
     --case "$case_id" --arm both \
     --backend-config "$BACKEND_CONFIG" \
-    --time-s "\${TASK1_TIME_S:-180}" \
-    --max-actions "\${TASK1_ACTIONS:-8}" \
+    --time-s "${TASK1_TIME_S:-180}" \
+    --max-actions "${TASK1_ACTIONS:-8}" \
     --cache "$WORKDIR/cache" \
     --out "$RUNS_DIR/$group"
   echo "Run artifacts: $RUNS_DIR/$group/$case_id"
@@ -113,7 +113,7 @@ run_case() {
   python3 "$HERE/summarize.py" --runs "$RUNS_DIR/$group" --out "$RUNS_DIR/$group/summary"
 }
 
-cmd="\${1:-help}"
+cmd="${1:-help}"
 case "$cmd" in
   setup)
     require_tool python3
@@ -151,7 +151,7 @@ case "$cmd" in
   report)
     [[ $# -le 2 ]] || { usage; exit 2; }
     ensure_upstream
-    group="\${2:-real}"
+    group="${2:-real}"
     [[ "$group" == "real" || "$group" == "demo" ]] || { echo "group must be real or demo"; exit 2; }
     python3 "$CASE_DRIVER" report --runs "$RUNS_DIR/$group" --out "$RUNS_DIR/$group/reports"
     python3 "$HERE/summarize.py" --runs "$RUNS_DIR/$group" --out "$RUNS_DIR/$group/summary"
