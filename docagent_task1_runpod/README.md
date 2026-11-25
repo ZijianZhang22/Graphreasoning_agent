@@ -120,3 +120,45 @@ validation and Qwen3:8B model inference have not yet been executed**.
 Each case requests independent human review (`status: pending`) before a
 research report claims verified behavior. C03 currently evaluates a
 localization answer; it does not execute pytest collection.
+
+
+## One command to run all four cases and export a ZIP
+
+After cloning this branch on a RunPod **GPU Pod**, run from this folder:
+
+```bash
+bash run_all.sh
+```
+
+This automatically performs: Ollama/Qwen3:8B setup, fake-backend smoke
+check, source manifest validation, independent Git-history evidence audit,
+a separate synthetic C00 integration demo, four C01–C04 real-model case
+runs (blind and checked in each), reports/CSV generation, and ZIP export.
+
+**The ZIP path is printed as `RESULT ZIP:` at the end**, normally
+`/workspace/docagent-task1/exports/DocAgent_Task1_<batch>.zip`.
+Download it through the RunPod file browser. Every invocation has an
+independent batch directory and does not overwrite previous experiments.
+
+For an already provisioned Pod where Ollama, Qwen3:8B and DocAgent
+have been installed:
+
+```bash
+SKIP_SETUP=1 SKIP_DEMO=1 bash run_all.sh
+```
+
+The package contains inputs, old/current claim evidence, model identity,
+initial and checked memory packets, raw action logs, generated patches,
+oracle verdicts, reports, per-case CSV, Git revision metadata, and
+stage-specific logs. It omits cloned Git source repositories, model
+weights, caches and secrets.
+
+If a case fails, the remaining cases are still attempted and the
+archive records any missing or incomplete sessions. If setup, smoke
+or source validation fails, no live case runs start, but diagnostic
+logs are still packaged. A finished shell command does **not**
+guarantee a model solved the task: inspect `batch_status.json` and each
+arm's `oracle_verdict`. C03 uses a localization oracle rather than
+executing the complete historical pytest suite.
+
+The script does not automatically push experimental outputs to GitHub.
