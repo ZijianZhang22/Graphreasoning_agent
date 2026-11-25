@@ -1,0 +1,13 @@
+{
+  "_comment": "Evaluator-only answers. Do not place in agent workspaces.",
+  "C05": {
+    "answer_any_of": [
+      "download_name"
+    ]
+  },
+  "C06": {
+    "answer_any_of": [
+      "src/requests/api.py"
+    ]
+  }
+}
