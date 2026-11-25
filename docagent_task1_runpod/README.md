@@ -162,3 +162,80 @@ arm's `oracle_verdict`. C03 uses a localization oracle rather than
 executing the complete historical pytest suite.
 
 The script does not automatically push experimental outputs to GitHub.
+
+
+## Replicate Xiangrui Task 1 three times (24 live sessions)
+
+This is a **separate, opt-in study extension**, not a change to Xiangrui's
+original four-case Task 1 specification. The four original cases, claims,
+task prompts, oracles and case driver are kept **unchanged**.
+
+On an existing RunPod with Ollama and the pinned DocAgent installed, run:
+
+```bash
+cd /workspace/Graphreasoning_agent
+git pull
+cd docagent_task1_runpod
+python3 test_repeated.py
+python3 run_repeated.py --skip-setup
+```
+
+For a fresh RunPod Pod, the last line becomes:
+
+```bash
+python3 run_repeated.py
+```
+
+Defaults: **3 rounds x 4 cases x 2 arms = 24 live sessions**. Within each
+round, Blind and Checked share the same predetermined Qwen3:8B/Ollama seed;
+across rounds the seeds are 20261119, 20261120, 20261121. Temperature stays
+at 0; contexts, tasks, tool budgets and source revisions are frozen. Both
+arms begin on clean independent source snapshots. Do **not** interpret three
+temperature-zero repeats as independent statistical samples.
+
+The script creates a **unique** batch for each invocation, with full
+per-round case reports and raw session traces:
+
+```text
+/workspace/docagent-task1/repeat_batches/<batch>/analysis/stability.md
+/workspace/docagent-task1/repeat_batches/<batch>/analysis/stability.json
+/workspace/docagent-task1/repeat_batches/<batch>/analysis/sessions.csv
+/workspace/docagent-task1/repeat_batches/<batch>/analysis/pairs.csv
+/workspace/docagent-task1/exports/DocAgent_Task1_Repeated_<batch>.zip
+```
+
+The ZIP contains the input manifests, per-attempt logs and patches,
+per-round reports, model backend configuration, stability summaries, failure
+logs and integrity hashes. A missing or non-live arm is explicitly counted
+as incomplete. The shell may return a nonzero code if a case fails; the
+script still attempts to write its partial ZIP.
+
+### Optional 2 historical-document-derived candidates (separate track)
+
+Two additional cases have been curated and documented in
+[EXTRA_CASE_EVIDENCE.md](EXTRA_CASE_EVIDENCE.md):
+
+- C05: Flask deprecated send_file argument removed, with actual historical
+  changelog and source docstring evidence.
+- C06: Requests adds type annotations while preserving the documented
+  request dispatch function.
+
+They have natural upstream code changes and contemporary human documentation.
+However, the compact **memory notes were extracted/paraphrased by the
+researcher**, so their note provenance is `snapshot_generated`, **not**
+an untouched historical document. Independent reviewer labels remain pending.
+
+To include them in the same **3-round experiment but a separate analysis
+track**, use:
+
+```bash
+python3 run_repeated.py --skip-setup --extra
+```
+
+That executes **24 primary + 12 optional = 36** intended live sessions,
+not 36 interchangeable primary Task 1 observations. Results are separately
+reported as `primary` and `extra`; never pool their pass rates.
+
+Run `python3 test_repeated.py` first for an offline accounting smoke test.
+The old `bash run_all.sh` remains available for the original one-round
+8-session experiment.
