@@ -1,5 +1,31 @@
 # Task 1 — acceptance status and remaining evidence
 
+## Latest supplemental audit — 2026-11-25 22:05:31 UTC
+
+Audit artifact: `20261125T220531Z.zip` (provided by the experiment owner).
+The supplemental audit is separate from and does not retroactively modify any
+previous Agent observation, Oracle grade or released-gate failure.
+
+| Case/check | Result | Direct evidence |
+|---|---|---|
+| C01 owner | PASS | Old `_dump_date` in `werkzeug/_internal.py` line 215; now in `werkzeug/http.py` line 686. Both `cookie_date` and `http_date` call it; the old file no longer defines it. |
+| C02 API behavior | PASS | At s `Retry(method_whitelist={'GET','HEAD'})` accepted. At t it raises `TypeError: unexpected keyword argument 'method_whitelist'`. `allowed_methods` works at t. Snapshot import paths validated. Legacy `six` finder shim used only in subprocess. |
+| C03 pytest collection | PASS | s+old selector: exit 0 and 36 nodes; t+old selector: exit 4 and 0 nodes; t+new selector: exit 0 and 36 nodes. Exact selector commands, IDs and stderr in uploaded audit ZIP. These are **collection** checks, not execution of test bodies. |
+| C04 harmless change | PASS | Source bytes changed but full executable AST equal at s/t. |
+| Released helper | EXECUTED for all four | Gate `covered_file_changed`: C01 true, C02 true, C03 **false**, C04 true. C03's old covered path **exists at s and is absent at t**. Its rename was not flagged by the file-level path matcher; this is a detection limit, not a successful freshness warning. |
+| Offline replay | PASS for all four | C01-C04 replay commands exited 0, created report Markdown, each reported 0 model calls and 0 backend processes. |
+
+**Open acceptance step: independent SECOND-PERSON blind review/sign-off of
+each old/new source claim.** The reviewer must record evidence and verdicts
+before reading these judgments, per `TASK1_REVIEW_TEMPLATE.md`. The original
+four claim notes are `researcher_authored`, not historical developer-written
+stale-memory incidents. C02's original agent task passes in both arms; the
+supplemental API probe establishes real interface drift but not that Blind
+suffered from it. C03's original oracle still graded the returned selector
+text; pytest collection evidence is separate.
+
+---
+
 This file tracks **Xiangrui's required four cases only**. C05/C06 and
 additional repeat runs are optional and must be reported separately.
 
@@ -32,7 +58,7 @@ unchanged**, using a shared-object Git worktree for a complete s..t
 history. Its results must be labelled as a **supplemental audit**, never
 substituted into original agent-run histories.
 
-## Pending checks (not claimed completed)
+## Prior audit plan (now completed technically; see latest audit above)
 
 1. C02 runtime probe of the old keyword at s, its rejection at t,
    and `allowed_methods` acceptance at t.
