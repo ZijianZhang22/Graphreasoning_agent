@@ -16,7 +16,7 @@ being misled by an actually existing stale document**.
 | Case | Category | Project | s (old) | t (current) | Expected case-only checker | Task type |
 |---|---|---|---|---|---|---|
 | C01 | moved_owner | Werkzeug | `d9caf5b88cc2` | `0e2cd5013f29` | s supported → t unresolved (original symbol removed) → omit | localize |
-| C02 | interface_drift | urllib3 | `9b95f29c575d` | `6446fef0cf43` | s supported → t contradicted → repair from signature | patch |
+| C02 | interface_drift | urllib3 | `ce16b219a77e` | `6446fef0cf43` | s supported → t contradicted → repair from signature | patch |
 | C03 | obsolete_test | itsdangerous | `f685200bda58` | `c493cd846e9d` | s supported → t unresolved (old test file removed) → omit | localize |
 | C04 | harmless_change | sampleproject | `00bed2f909a4` | `c54b977c7ebf` | s supported → t supported → reuse | patch |
 
@@ -42,12 +42,12 @@ as if the released DocAgent checker proved the new location.
 
 ### C02 — urllib3: removed constructor parameter
 
-- [Old release 1.25.11](https://github.com/urllib3/urllib3/tree/9b95f29c575d73260ec4f5a8c0ea368cf242019e):
-  `Retry.__init__(..., method_whitelist=DEFAULT_METHOD_WHITELIST, ...)`.
+- [Old mainline ancestor (2020-11-08)](https://github.com/urllib3/urllib3/tree/ce16b219a77ed38d76b7b1d4b55ad9f757f66361):
+  `Retry.__init__(..., allowed_methods=_Default, ..., method_whitelist=_Default)`; the older keyword was accepted with a deprecation warning.
 - [New release 2.0.0](https://github.com/urllib3/urllib3/tree/6446fef0cf432ca035169602a1447a0d8ef53e80):
   `Retry.__init__(..., allowed_methods=DEFAULT_ALLOWED_METHODS, ...)`;
   `method_whitelist` is absent and there is no `**kwargs` alias in this
-  signature. This is a genuine interface change, not merely a warning.
+  signature. This is a genuine interface change: the older revision accepts a deprecated alias and the newer revision removes it. The selected old SHA is an **ancestor** of the new one (GitHub compare: behind_by=0).
 - Task: change the default retry method policy to GET and HEAD but preserve
   explicit caller overrides. Oracle imports `Retry` from the patched source,
   checks default methods and explicit override behavior. The old base should
