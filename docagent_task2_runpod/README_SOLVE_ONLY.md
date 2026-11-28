@@ -3,13 +3,13 @@
 RunPod only performs data preparation, three-arm real Agent inference, and patch/trace capture. A later independent Docker host or GitHub Actions grades the saved requests. **This intentionally deviates from Xiangrui's Task 2 protocol requiring official base/gold controls before held-out solving.** Do not call any `resolved` status until the official grader completes. Record this limitation in the report; if strict acceptance is required, grade the controls before the solver.
 
 1. In RunPod console, create one GPU Pod (suggest L40S 48GB), official PyTorch template, persistent /workspace volume (100 GB minimum, ideally 150 GB for model & Git caches), connect via Web Terminal. Container root disk can be 30-50 GB; the persistent volume must hold all artifacts.
-2. Clone the existing Graphreasoning_agent repository from GitHub; all these scripts are already included in `docagent_task2_runpod/`. No ZIP upload is necessary.
+2. Upload **the contents of this starter ZIP** using the Pod's Jupyter upload UI to `/workspace/DocAgent_Task2_RunPod_Starter_Deferred.zip` (or upload to a different path and change the `unzip` command).
 3. In the Pod's terminal:
 
 ```bash
-cd /workspace
- git clone -b feature/docagent-task1-runpod-qwen3-8b https://github.com/ZijianZhang22/Graphreasoning_agent.git
- cd /workspace/Graphreasoning_agent/docagent_task2_runpod
+mkdir -p /workspace/Graphreasoning_agent/docagent_task2_runpod
+unzip -o /workspace/DocAgent_Task2_RunPod_Starter_Deferred.zip -d /workspace/Graphreasoning_agent/docagent_task2_runpod
+cd /workspace/Graphreasoning_agent/docagent_task2_runpod
 bash deploy_new_runpod.sh
 python3 solve_only_task2.py preflight
 python3 solve_only_task2.py smoke
